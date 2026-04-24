@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, getDocs, doc, updateDoc, writeBatch } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, writeBatch, deleteDoc } from "firebase/firestore";
 
 const ADMIN_EMAIL = "upareladavid@gmail.com";
 
@@ -9,10 +9,15 @@ export default function Admin({ usuario }) {
   const [resultados, setResultados] = useState({});
   const [guardando, setGuardando] = useState({});
   const [abierto, setAbierto] = useState(false);
+  const [jugadores, setJugadores] = useState([]);
+  const [eliminando, setEliminando] = useState({});
 
   if (usuario.email !== ADMIN_EMAIL) return null;
 
-  useEffect(() => { cargarPartidos(); }, []);
+  useEffect(() => {
+    cargarPartidos();
+    cargarJugadores();
+  }, []);
 
   async function cargarPartidos() {
     const snap = await getDocs(collection(db, "partidos"));
@@ -24,6 +29,38 @@ export default function Admin({ usuario }) {
       res[p.id] = { golesA: p.golesA ?? "", golesB: p.golesB ?? "" };
     });
     setResultados(res);
+  }
+
+  async function cargarJugadores() {
+    const snap = await getDocs(collection(db, "pronosticos"));
+    const jugadoresMap = {};
+    snap.docs.forEach(d => {
+      const data = d.data();
+      if (!jugadoresMap[data.uid]) {
+        jugadoresMap[data.uid] = {
+          uid: data.uid,
+          nombre: data.nombre,
+          foto: data.foto,
+          email: data.email || "",
+          pronosticos: [],
+        };
+      }
+      jugadoresMap[data.uid].pronosticos.push(d.id);
+    });
+    setJugadores(Object.values(jugadoresMap));
+  }
+
+  async function eliminarJugador(jugador) {
+    if (!window.confirm(`¿Seguro que quieres eliminar a ${jugador.nombre} y todos sus pronósticos?`)) return;
+    setEliminando(prev => ({ ...prev, [jugador.uid]: true }));
+    const batch = writeBatch(db);
+    jugador.pronosticos.forEach(id => {
+      batch.delete(doc(db, "pronosticos", id));
+    });
+    await batch.commit();
+    setEliminando(prev => ({ ...prev, [jugador.uid]: false }));
+    alert(`✅ ${jugador.nombre} eliminado correctamente.`);
+    cargarJugadores();
   }
 
   function calcularPuntos(pronostico, realA, realB) {
@@ -77,9 +114,45 @@ export default function Admin({ usuario }) {
 
       {abierto && (
         <div style={{ marginTop: 12 }}>
+
+          {/* Sección jugadores */}
+          <div style={{ background: "#111", border: "1px solid #1e1000",
+            borderRadius: 12, padding: "1rem", marginBottom: 16 }}>
+            <h3 style={{ color: "#f5a623", fontSize: 13, fontWeight: 700,
+              letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
+              👥 Jugadores inscritos
+            </h3>
+            {jugadores.length === 0 && (
+              <p style={{ color: "#555", fontSize: 13 }}>No hay jugadores aún.</p>
+            )}
+            {jugadores.map(j => (
+              <div key={j.uid} style={{ display: "flex", alignItems: "center", gap: 10,
+                padding: "8px 0", borderBottom: "1px solid #1a1000" }}>
+                <img src={j.foto} alt="foto" style={{ width: 32, height: 32,
+                  borderRadius: "50%", border: "1px solid #333" }} />
+                <span style={{ flex: 1, color: "#ddd", fontSize: 14 }}>{j.nombre}</span>
+                <span style={{ color: "#555", fontSize: 12 }}>
+                  {j.pronosticos.length} pronósticos
+                </span>
+                <button onClick={() => eliminarJugador(j)}
+                  disabled={eliminando[j.uid]}
+                  style={{ padding: "5px 14px", background: "transparent",
+                    border: "1px solid #e53935", color: "#e53935",
+                    borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
+                  {eliminando[j.uid] ? "Eliminando..." : "Eliminar"}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Sección resultados */}
+          <h3 style={{ color: "#f5a623", fontSize: 13, fontWeight: 700,
+            letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
+            ⚽ Ingresar resultados
+          </h3>
           {partidos.map(partido => (
             <div key={partido.id} style={{
-              background: "#111", border: "1px solid #1e1e1e",
+              background: "#111", border: "1px solid #1e1000",
               borderRadius: 12, padding: "1rem 1.25rem", marginBottom: 8
             }}>
               <div style={{ fontSize: 11, color: "#444", marginBottom: 8 }}>
@@ -95,7 +168,7 @@ export default function Admin({ usuario }) {
                     ...prev, [partido.id]: { ...prev[partido.id], golesA: e.target.value }
                   }))}
                   style={{ width: 46, textAlign: "center", fontSize: 20, fontWeight: 800,
-                    background: "#1a1a1a", color: "#f5a623", border: "1px solid #333",
+                    background: "#1a1000", color: "#f5a623", border: "1px solid #333",
                     borderRadius: 8, padding: "4px 0" }}
                 />
                 <span style={{ color: "#333", fontSize: 18 }}>:</span>
@@ -105,7 +178,7 @@ export default function Admin({ usuario }) {
                     ...prev, [partido.id]: { ...prev[partido.id], golesB: e.target.value }
                   }))}
                   style={{ width: 46, textAlign: "center", fontSize: 20, fontWeight: 800,
-                    background: "#1a1a1a", color: "#f5a623", border: "1px solid #333",
+                    background: "#1a1000", color: "#f5a623", border: "1px solid #333",
                     borderRadius: 8, padding: "4px 0" }}
                 />
                 <span style={{ fontWeight: 600, flex: 1, color: "#eee", fontSize: 14 }}>
