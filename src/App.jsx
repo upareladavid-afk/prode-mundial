@@ -51,33 +51,35 @@ export default function App() {
       background: "linear-gradient(135deg, #0a0500 0%, #1a0e00 40%, #0a0500 100%)",
       position: "relative", overflow: "hidden" }}>
 
-      {/* Decoración izquierda */}
-      <div style={{ position: "absolute", left: 20, top: "50%", transform: "translateY(-50%)",
-        display: "flex", flexDirection: "column", gap: 30, alignItems: "center" }}>
-        <img src="/cerveza.png" alt="cerveza" style={{ width: 90, height: 130,
-          objectFit: "contain", opacity: 0.75,
-          filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.6))" }} />
-        <img src="/balon.png" alt="balon" style={{ width: 60, height: 60,
-          objectFit: "contain", opacity: 0.65,
-          filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.6))" }} />
-        <img src="/barril.png" alt="barril" style={{ width: 90, height: 90,
-          objectFit: "contain", opacity: 0.75,
-          filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.6))" }} />
-      </div>
+      {/* Decoración izquierda - solo en pantallas grandes */}
+<div style={{ position: "absolute", left: 20, top: "50%", transform: "translateY(-50%)",
+  display: "flex", flexDirection: "column", gap: 30, alignItems: "center",
+  visibility: window.innerWidth < 600 ? "hidden" : "visible" }}>
+  <img src="/cerveza.png" alt="cerveza" style={{ width: 90, height: 130,
+    objectFit: "contain", opacity: 0.75,
+    filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.6))" }} />
+  <img src="/balon.png" alt="balon" style={{ width: 60, height: 60,
+    objectFit: "contain", opacity: 0.65,
+    filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.6))" }} />
+  <img src="/barril.png" alt="barril" style={{ width: 90, height: 90,
+    objectFit: "contain", opacity: 0.75,
+    filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.6))" }} />
+</div>
 
-      {/* Decoración derecha */}
-      <div style={{ position: "absolute", right: 20, top: "50%", transform: "translateY(-50%)",
-        display: "flex", flexDirection: "column", gap: 30, alignItems: "center" }}>
-        <img src="/copa.png" alt="copa" style={{ width: 90, height: 130,
-          objectFit: "contain", opacity: 0.75,
-          filter: "drop-shadow(0 4px 16px rgba(245,166,35,0.3))" }} />
-        <img src="/cerveza.png" alt="cerveza" style={{ width: 90, height: 90,
-          objectFit: "contain", opacity: 0.75,
-          filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.6))" }} />
-        <img src="/barril.png" alt="barril" style={{ width: 90, height: 90,
-          objectFit: "contain", opacity: 0.75,
-          filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.6))" }} />
-      </div>
+{/* Decoración derecha - solo en pantallas grandes */}
+<div style={{ position: "absolute", right: 20, top: "50%", transform: "translateY(-50%)",
+  display: "flex", flexDirection: "column", gap: 30, alignItems: "center",
+  visibility: window.innerWidth < 600 ? "hidden" : "visible" }}>
+  <img src="/copa.png" alt="copa" style={{ width: 90, height: 130,
+    objectFit: "contain", opacity: 0.75,
+    filter: "drop-shadow(0 4px 16px rgba(245,166,35,0.3))" }} />
+  <img src="/cerveza.png" alt="cerveza" style={{ width: 90, height: 90,
+    objectFit: "contain", opacity: 0.75,
+    filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.6))" }} />
+  <img src="/barril.png" alt="barril" style={{ width: 90, height: 90,
+    objectFit: "contain", opacity: 0.75,
+    filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.6))" }} />
+</div>
 
       {/* Contenido central */}
       <div style={{ zIndex: 1, display: "flex", flexDirection: "column",
