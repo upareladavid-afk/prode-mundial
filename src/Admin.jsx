@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, getDocs, doc, updateDoc, writeBatch, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, writeBatch } from "firebase/firestore";
 
 const ADMIN_EMAIL = "upareladavid@gmail.com";
 
@@ -8,6 +8,7 @@ export default function Admin({ usuario }) {
   const [partidos, setPartidos] = useState([]);
   const [resultados, setResultados] = useState({});
   const [guardando, setGuardando] = useState({});
+  const [reseteando, setReseteando] = useState({});
   const [abierto, setAbierto] = useState(false);
   const [jugadores, setJugadores] = useState([]);
   const [eliminando, setEliminando] = useState({});
@@ -41,7 +42,6 @@ export default function Admin({ usuario }) {
           uid: data.uid,
           nombre: data.nombre,
           foto: data.foto,
-          email: data.email || "",
           pronosticos: [],
         };
       }
@@ -101,6 +101,23 @@ export default function Admin({ usuario }) {
     cargarPartidos();
   }
 
+  async function resetearResultado(partido) {
+    if (!window.confirm(`¿Resetear resultado de ${partido.equipoA} vs ${partido.equipoB}? Los puntos volverán a 0.`)) return;
+    setReseteando(prev => ({ ...prev, [partido.id]: true }));
+    await updateDoc(doc(db, "partidos", partido.id), { golesA: null, golesB: null });
+    const snapPron = await getDocs(collection(db, "pronosticos"));
+    const batch = writeBatch(db);
+    snapPron.docs.forEach(d => {
+      if (d.data().partidoId === partido.id) {
+        batch.update(doc(db, "pronosticos", d.id), { puntos: 0 });
+      }
+    });
+    await batch.commit();
+    setReseteando(prev => ({ ...prev, [partido.id]: false }));
+    alert(`✅ Resultado reseteado. Pronósticos vuelven a 0 puntos.`);
+    cargarPartidos();
+  }
+
   return (
     <div style={{ maxWidth: 620, margin: "2rem auto", padding: "0 1rem" }}>
       <button onClick={() => setAbierto(!abierto)} style={{
@@ -115,7 +132,7 @@ export default function Admin({ usuario }) {
       {abierto && (
         <div style={{ marginTop: 12 }}>
 
-          {/* Sección jugadores */}
+          {/* Jugadores */}
           <div style={{ background: "#111", border: "1px solid #1e1000",
             borderRadius: 12, padding: "1rem", marginBottom: 16 }}>
             <h3 style={{ color: "#f5a623", fontSize: 13, fontWeight: 700,
@@ -145,7 +162,7 @@ export default function Admin({ usuario }) {
             ))}
           </div>
 
-          {/* Sección resultados */}
+          {/* Resultados */}
           <h3 style={{ color: "#f5a623", fontSize: 13, fontWeight: 700,
             letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
             ⚽ Ingresar resultados
@@ -157,6 +174,11 @@ export default function Admin({ usuario }) {
             }}>
               <div style={{ fontSize: 11, color: "#444", marginBottom: 8 }}>
                 {partido.fecha} · {partido.fase}
+                {partido.golesA !== null && partido.golesA !== undefined && (
+                  <span style={{ marginLeft: 8, color: "#f5a623", fontWeight: 600 }}>
+                    Resultado actual: {partido.golesA} - {partido.golesB}
+                  </span>
+                )}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
                 <span style={{ fontWeight: 600, flex: 1, textAlign: "right", color: "#eee", fontSize: 14 }}>
@@ -185,14 +207,23 @@ export default function Admin({ usuario }) {
                   {partido.equipoB}
                 </span>
               </div>
-              <button onClick={() => guardarResultado(partido)}
-                disabled={guardando[partido.id]}
-                style={{ display: "block", margin: "10px auto 0", padding: "7px 22px",
-                  background: "linear-gradient(90deg, #e53935, #c62828)",
-                  color: "white", border: "none", borderRadius: 8,
-                  cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
-                {guardando[partido.id] ? "Calculando..." : "Guardar resultado"}
-              </button>
+              <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 10 }}>
+                <button onClick={() => guardarResultado(partido)}
+                  disabled={guardando[partido.id]}
+                  style={{ padding: "7px 18px",
+                    background: "linear-gradient(90deg, #e53935, #c62828)",
+                    color: "white", border: "none", borderRadius: 8,
+                    cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
+                  {guardando[partido.id] ? "Guardando..." : "Guardar resultado"}
+                </button>
+                <button onClick={() => resetearResultado(partido)}
+                  disabled={reseteando[partido.id]}
+                  style={{ padding: "7px 18px", background: "transparent",
+                    color: "#888", border: "1px solid #333",
+                    borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+                  {reseteando[partido.id] ? "Reseteando..." : "🔄 Resetear"}
+                </button>
+              </div>
             </div>
           ))}
         </div>
