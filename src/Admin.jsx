@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { db } from "./firebase";
 import { collection, getDocs, doc, updateDoc, writeBatch } from "firebase/firestore";
 
-const ADMIN_EMAIL = "davidlozanobotero@gmail.com";
+const ADMIN_EMAIL = "upareladavid@gmail.com";
 
 export default function Admin({ usuario }) {
   const [partidos, setPartidos] = useState([]);
